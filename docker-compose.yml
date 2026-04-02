@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pulseboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/metrics-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      JWT_SECRET: supersecretkey
+    depends_on:
+      - postgres
+
+  metrics-service:
+    build: ./services/metrics-service
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pulseboard
+    depends_on:
+      - postgres
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      JWT_SECRET: supersecretkey
+      AUTH_SERVICE_URL: http://auth-service:3001
+      METRICS_SERVICE_URL: http://metrics-service:3002
+    depends_on:
+      - auth-service
+      - metrics-service
+
+volumes:
+  postgres_data:
