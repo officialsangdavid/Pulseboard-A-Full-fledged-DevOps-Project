@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS deployments (
+  id SERIAL PRIMARY KEY,
+  service_name VARCHAR(100) NOT NULL,
+  status VARCHAR(50) NOT NULL,
+  version VARCHAR(50),
+  created_at TIMESTAMP DEFAULT NOW()
+);
